@@ -8,6 +8,7 @@
 
 <script type="text/javascript">
 
+// Upphafstillingar
 let config = {
     type: Phaser.AUTO,
     width: 1300,
@@ -61,7 +62,7 @@ function create ()
     platforms = this.physics.add.staticGroup();
 
     // Bý til ground platforma
-    // Scale-a þá upp
+    // Scale-a þá upp til að passa sem ground
     platforms.create(400, 780, 'ground').setScale(2).refreshBody();
     platforms.create(900, 780, 'ground').setScale(2).refreshBody();
     
@@ -73,7 +74,7 @@ function create ()
         platforms.create(startX[i],startY[i],'ground')
     }
 
-
+    // Bæti við hljóðum
     jumpSound = this.sound.add('jumpSound');
     deathSound = this.sound.add('deathSound')
     // Bætir við sprites
@@ -84,6 +85,7 @@ function create ()
     // Setur colliders á endan á worldinu
     player.setCollideWorldBounds(true);
     enemy.setCollideWorldBounds(true);
+
     // Set þetta svo það er ekki hægt að ýta hurðinni
     door.body.checkCollision.right = false;
 
@@ -129,6 +131,7 @@ function create ()
     // Keyboard stjórnun
     cursors = this.input.keyboard.createCursorKeys();
 
+    // Stjörnur
     stars = this.physics.add.group({
         key: 'star',
         repeat: 2,
@@ -151,7 +154,9 @@ function create ()
     for (i=0;i < colliders.length;i++){
         this.physics.add.collider(colliders[i], platforms)
     }
-
+    // Lætur enemies byrja að fara til hægri
+    enemy.setVelocityX(50);
+    enemy.anims.play('rightEnemy', true);
     //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
     this.physics.add.overlap(player, stars, collectStar, null, this);
     this.physics.add.overlap(player, door, enterDoor, null, this);
@@ -161,17 +166,21 @@ function create ()
 
 function update ()
 {
-	enemy.setVelocityX(50);
-	enemy.anims.play('rightEnemy', true);
+    // Ef enenmy er blocked fer hann í hina áttina
+    if (enemy.body.touching.right || enemy.body.blocked.right) {
+        enemy.setVelocityX(-50); 
+        enemy.anims.play('leftEnemy', true);// turn left
+    }
+    else if (enemy.body.touching.left || enemy.body.blocked.left) {
+        enemy.setVelocityX(50);
+        enemy.anims.play('rightEnemy', true); // turn right
+    }
+
     if (gameOver)
     {
         return;
     }
-   
-    if (enemy.positionX > 1200)
-    {
-        enemy.setVelocityX(-50);
-    }
+    
     // Player stjórnun
     if (cursors.left.isDown)
     {
@@ -220,9 +229,10 @@ function getKey (player, key)
     hasKey = true;
 }
 
-
 function hitEnemy (player, enemy)
 {
+    loseText = this.add.text(300, 400, 'You lose.', { fontSize: '64px', fill: '#000' });
+    loseText.setText('You lose. Score: ' + score);
     // Spilar sound effect
     deathSound.play();
 
